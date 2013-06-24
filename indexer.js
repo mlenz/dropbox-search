@@ -1,3 +1,14 @@
+/*
+github.com/mlenz/dropbox-search
+Solr indexer for Dropbox files. Loops and fires delta queries to the specified 
+Dropbox API account and user. Results from delta queries go into a queue from which
+we process one update per second. For each file added or modified, posts the file
+to a local Solr index using update/extract, which can parse many common file types.
+We also populate some custom fields such as mime_type as specified in 
+solr/schema.xml.  The unique Solr document id is the lowercased file path.
+If delta indicates a file is deleted, it is removed from the index.
+*/
+
 var solr = require("solr");
 var dbox = require("dbox");
 var querystring = require("querystring");

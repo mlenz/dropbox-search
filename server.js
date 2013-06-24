@@ -1,10 +1,15 @@
+/*
+github.com/mlenz/dropbox-search
+Simple node server for search page. Sends search requests to solr instance and return the
+resulting json to the client for display. Examples solr instance to be customized to 
+return certain fields (see schema.xml). Further extends queries to define custom
+field names such as 'where' and 'when'.
+Uses the Solr eDisMax parser for rich handling of user input.
+*/
+
 var express = require("express");
-var http = require("http");
 var url = require("url");
-var fs = require("fs");
-var dbox = require("dbox");
 var solr = require("solr");
-var querystring = require("querystring");
 
 var host = process.env.SERVER_HOST || "";
 var port = process.env.PORT || 8888;
@@ -16,7 +21,7 @@ function start() {
         res.sendfile("web/search.html");
     });
     
-    app.get(/\/*.gif$/, function(req, res) {
+    app.get(/.(gif|js)$/, function(req, res) {
         res.sendfile("web" + req.url);
     });
 
@@ -31,7 +36,9 @@ function start() {
             "qf" : "title text",
             "hl" : "on",
             "hl.fl" : "*",
-            "start" : start
+            "start" : start,
+            host : process.env.SOLR_HOST,
+            port : process.env.SOLR_PORT
         };
         text = formatSearchQuery(text);
         solr.createClient().query(text, options, function(err, reply) {
@@ -50,7 +57,8 @@ function start() {
         text = text.replace(/\bin:/g, "path:");
         text = text.replace(/\bby:/g, "author:");
         text = text.replace(/\btype:/g, "mime_type:");
-        text = text.replace(/\bwhere:[a-zA-Z-]*\b/g, "gps_latitude:*"); // TODO
+        // TODO quote " must be escaped
+        text = text.replace(/\bwhere:([0-9'"\.-]+)\b/g, "gps_latitude:$1* OR gps_longitude:$1*");
         text = text.replace(/\bwhen:today\b/g, "when:[NOW/DAY TO NOW]");
         text = text.replace(/\bwhen:yesterday\b/g, "when:[NOW-1DAY/DAY TO NOW/DAY]");
         // e.g. when:2013 or when:2012-01 or when:2011-10-08
