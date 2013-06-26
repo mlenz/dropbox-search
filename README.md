@@ -11,6 +11,7 @@ Bundled with a simple web front end with snippets and ajax loading of results.
 
 <table>
 <tr><td>recipe</td><td>Search for text (case and stemming aware)</td></tr>
+<tr><td>"cake recipe"</td><td>Phrase search</td></tr>
 <tr><td>jam recipe in:Files</td><td>Match documents within a folder</td></tr>
 <tr><td>when:yesterday</td><td>All documents modified yesterday</td></tr>
 <tr><td>recipe when:2012</td><td>Matches from year 2012</td></tr>
@@ -45,7 +46,7 @@ The code doesn't yet implement the oauth protocol, so you must do this manually 
 
 ### Indexing
 
-Dropbox-search uses ExtractingRequestHandler to index multiple file types, including: **pdf**, **doc** and **dox** (Word),
+Dropbox-search uses ExtractingRequestHandler to index multiple file types, including: **pdf**, **doc** and **docx** (Word),
 **xls** (Excel), **ppt**, **odt**, **csv**, **html**, **rtf**, **txt**, and more.  In addition to text content, it extracts metadata
 such as **author** and **date**. For image files, it extracts exif metadata like **gps_latitude**.
 

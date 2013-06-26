@@ -25,7 +25,8 @@ var login_token = {
     oauth_token_secret: process.env.DROPBOX_OAUTH_SECRET
 };
 
-var solrClient = solr.createClient();
+var solrClient = null;
+var dboxClient = null;
 var fileQueue = [];
 var rootPath = process.env.ROOT_PATH;
 
@@ -40,6 +41,7 @@ function processFiles(dboxClient, dir) {
     dboxClient.delta({cursor : deltaCursor}, function(status, reply) {
         if (status != 200) {
             console.log("Delta status: " + status + " : " + JSON.stringify(reply));
+            scheduleFetch();
             return;
         }
         if (reply.cursor) {
@@ -59,7 +61,15 @@ function processFiles(dboxClient, dir) {
                 }
             }
         }
+        scheduleFetch(reply.has_more);
     });
+}
+
+function scheduleFetch(noDelay)
+{
+	setTimeout(function() {
+    	processFiles(dboxClient, rootPath);
+	}, noDelay ? 60 * 1000 : 5 * 60 * 1000);
 }
 
 function ignore(path) {
@@ -119,18 +129,36 @@ function deleteFile(path) {
 function dequeueFile(client) {
 	if (fileQueue.length > 0) {
 		var entry = fileQueue.shift();
-		indexFile(client, entry[0], entry[1]);
+		var path = entry[0];
+		var metadata = entry[1];
+		
+		// If the file is already indexed with the given revision, no need to re-index.
+		solrClient.query(
+			"id:\"" + path + "\" AND rev:" + metadata.rev,
+			{ "fl" : "id" },
+			function(err, reply) {
+				if (err || !reply) {
+					indexFile(client, path, metadata);
+				}
+				else {
+					var response = JSON.parse(reply).response;
+					if (response.numFound !== 1) {
+						indexFile(client, path, metadata);
+					}
+				}
+        	});
 	}
 }
 
 // Main loop
+function main() {
+	solrClient = solr.createClient();
+	dboxClient = dbox.client(login_token);
 
-var dboxClient = dbox.client(login_token);
+	setInterval(function() { dequeueFile(dboxClient) }, 1000);
 
-setInterval(function() { dequeueFile(dboxClient) }, 1000);
+	processFiles(dboxClient, rootPath);
+}
 
-processFiles(dboxClient, rootPath);
+main();
 
-setInterval(function() {
-    processFiles(dboxClient, rootPath);
-}, 60 * 1000);
