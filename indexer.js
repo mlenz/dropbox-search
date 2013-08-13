@@ -57,7 +57,7 @@ function processFiles(dboxClient, dir) {
                     deleteFile(entry[0]);
                 }
                 else if (!entry[1].is_dir) {
-                    fileQueue.push(entry);	// to reduce rate-limiting 503 errors from dropbox
+                    fileQueue.push(entry);    // to reduce rate-limiting 503 errors from dropbox
                 }
             }
         }
@@ -67,9 +67,9 @@ function processFiles(dboxClient, dir) {
 
 function scheduleFetch(noDelay)
 {
-	setTimeout(function() {
-    	processFiles(dboxClient, rootPath);
-	}, noDelay ? 60 * 1000 : 5 * 60 * 1000);
+    setTimeout(function() {
+        processFiles(dboxClient, rootPath);
+    }, noDelay ? 60 * 1000 : 5 * 60 * 1000);
 }
 
 function ignore(path) {
@@ -127,37 +127,37 @@ function deleteFile(path) {
 }
 
 function dequeueFile(client) {
-	if (fileQueue.length > 0) {
-		var entry = fileQueue.shift();
-		var path = entry[0];
-		var metadata = entry[1];
-		
-		// If the file is already indexed with the given revision, no need to re-index.
-		solrClient.query(
-			"id:\"" + path + "\" AND rev:" + metadata.rev,
-			{ "fl" : "id" },
-			function(err, reply) {
-				if (err || !reply) {
-					indexFile(client, path, metadata);
-				}
-				else {
-					var response = JSON.parse(reply).response;
-					if (response.numFound !== 1) {
-						indexFile(client, path, metadata);
-					}
-				}
-        	});
-	}
+    if (fileQueue.length > 0) {
+        var entry = fileQueue.shift();
+        var path = entry[0];
+        var metadata = entry[1];
+        
+        // If the file is already indexed with the given revision, no need to re-index.
+        solrClient.query(
+            "id:\"" + path + "\" AND rev:" + metadata.rev,
+            { "fl" : "id" },
+            function(err, reply) {
+                if (err || !reply) {
+                    indexFile(client, path, metadata);
+                }
+                else {
+                    var response = JSON.parse(reply).response;
+                    if (response.numFound !== 1) {
+                        indexFile(client, path, metadata);
+                    }
+                }
+            });
+    }
 }
 
 // Main loop
 function main() {
-	solrClient = solr.createClient();
-	dboxClient = dbox.client(login_token);
+    solrClient = solr.createClient();
+    dboxClient = dbox.client(login_token);
 
-	setInterval(function() { dequeueFile(dboxClient) }, 1000);
+    setInterval(function() { dequeueFile(dboxClient); }, 1000);
 
-	processFiles(dboxClient, rootPath);
+    processFiles(dboxClient, rootPath);
 }
 
 main();
