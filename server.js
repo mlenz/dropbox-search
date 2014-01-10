@@ -10,6 +10,18 @@ Uses the Solr eDisMax parser for rich handling of user input.
 var express = require("express");
 var url = require("url");
 var solr = require("solr");
+var dbox = require("dbox");
+
+var dbox = dbox.app({
+    "app_key" : process.env.DROPBOX_APP_KEY,
+    "app_secret": process.env.DROPBOX_APP_SECRET,
+    "root": "dropbox"
+});
+var login_token = {
+    uid : process.env.DROPBOX_UID,
+    oauth_token: process.env.DROPBOX_OAUTH_TOKEN,
+    oauth_token_secret: process.env.DROPBOX_OAUTH_SECRET
+};
 
 var host = process.env.SERVER_HOST || "";
 var port = process.env.PORT || 8888;
@@ -21,10 +33,22 @@ function start() {
         res.sendfile("web/search.html");
     });
     
+    // URI /file followed by a file path fetches the path
+    // from Dropbox API and returns contents to browser
+    app.get(/\/file\//, function(req, res) {
+        var path = unescape(req.url.replace(/\/file/, ''));
+        dbox.client(login_token).get(path, function(status, reply, metadata) {
+            res.set('Content-Type', metadata.mime_type);
+            res.set('ETag', metadata.rev);
+            res.send(reply);
+        });
+    });
+    
     app.get(/.(gif|js)$/, function(req, res) {
         res.sendfile("web" + req.url);
     });
 
+    // Ajax action to query Solr with given query string
     app.get(/\/find$/, function(req, res) {
         var query = url.parse(req.url, true).query;
         var text = query.q;

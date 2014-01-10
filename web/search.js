@@ -87,7 +87,7 @@ of results, and support ajax history back/forward actions.
                 title = result.path;
             }
             var icon = "<img src='/icons/" + result.icon + ".gif' class='icon'>";
-            resultsDiv.append("<dt>" + icon + title + "</dt>");
+            resultsDiv.append("<dt><a href='/file" + result.path + "'>" + icon + title + "</a></dt>");
             resultsDiv.append("<dd class='path'>" + formatPath(result.path) + "</dd>");
             var snippet = "<dd>" + formatDate(result.when);
             for (var h in hilight) {
