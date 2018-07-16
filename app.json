@@ -1,0 +1,26 @@
+{
+  "name": "dropbox-search",
+  "scripts": {
+  },
+  "env": {
+    "DROPBOX_ACCESS_TOKEN": {
+      "required": true
+    },
+    "SOLR_HOST": {
+      "required": true
+    },
+    "SOLR_PORT": {
+      "required": true
+    }
+  },
+  "formation": {
+  },
+  "addons": [
+
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ]
+}
